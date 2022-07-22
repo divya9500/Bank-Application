@@ -1,0 +1,297 @@
+package BankApplication;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
+public class Details {
+
+    static Connection con;
+    static Statement stmt;
+    static {
+        try {
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/app", "root", "zoho");
+            stmt = con.createStatement();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public static void intial() throws SQLException {
+        String qu="select * from details1";
+        ResultSet rs=stmt.executeQuery(qu);
+        while (rs.next()){
+            for(int i=1;i<=5;i++){
+                System.out.print(rs.getString(i)+"  ");
+            }
+            System.out.println();
+        }
+
+    }
+  public static String  encrypt(String password){
+      char arr[]=password.toCharArray();
+      String en="";
+      for(int i=0;i<arr.length;i++){
+          char a= (char) (arr[i]+1);
+          if(a==123)
+              a=97;
+          if(a==91)
+              a=65;
+          if(a==58)
+              a=48;
+          en=en+a;
+      }
+      return en;
+  }
+    static  int count=0;
+  public static void cc() throws SQLException {
+      count=0;
+      String qu="select * from details1";
+      ResultSet rs=stmt.executeQuery(qu);
+      while (rs.next()){
+          for(int i=1;i<=5;i++){
+             int x= rs.getInt("bal");
+          }
+         count++;
+      }
+
+  }
+  public static void addNew(int id,int accnum,String name,int bal,String en) throws SQLException {
+      String qu1="insert into details1 values( '"+ id +"','"+ accnum +"','"+name+"','"+ bal +"','"+en+"')";
+      stmt.executeUpdate(qu1);
+      String type="opening";int amunt=10000,bal1=10000;
+      stmt.executeUpdate("insert into state1 values('"+id+"','"+type+"','"+amunt+"','"+bal1+"')");
+
+      System.out.println("New customer are added successfully");
+  }
+
+  public static int Authentication(int cid,String pw) throws SQLException {
+      int n=0;
+      String en=encrypt(pw);
+   ResultSet set=   stmt.executeQuery("select * from details1 where custid='"+cid+"' AND pw='"+en+"'");
+      if(set.next())
+          n=1;
+      else{
+          System.out.println("invalid user id  or password");
+          n=0;
+      }
+
+      return n;
+  }
+
+  public static int BalanceDetails(int cid,String pw) throws SQLException {
+      int currentbal=0;
+      String en=encrypt(pw);
+      ResultSet set=   stmt.executeQuery("select * from details1 where custid='"+cid+"' AND pw='"+en+"'");
+      while (set.next()){
+          for(int i=1;i<=5;i++){
+              currentbal  =set.getInt("bal");
+          }
+      }
+      return currentbal;
+  }
+ static int temp=0;
+    public static int BalanceDetails(int cid) throws SQLException {
+        int currentbal=0;
+        ResultSet set = null;
+        if(temp!=0) {
+            set = stmt.executeQuery("select * from details1 where custid='" + cid + "'");
+        }else {
+            set = stmt.executeQuery("select * from details1 where accno='" + cid + "'");
+        }
+        while (set.next()){
+            for(int i=1;i<=5;i++){
+                currentbal  =set.getInt("bal");
+            }
+        }
+        return currentbal;
+    }
+
+  public static void update(int cid,int currentbal,int amunt,String type) throws SQLException {
+
+      stmt.executeUpdate("UPDATE details1 SET bal = '"+currentbal+"' WHERE custid = +'"+cid+"'");
+
+      stmt.executeUpdate("insert into state1 values('"+cid+"','"+type+"','"+amunt+"','"+currentbal+"')");
+  }
+
+    public static void columnName() {
+        System.out.printf("%15s", "CustomerId");
+        System.out.printf("%15s", "AccountNumber");
+        System.out.printf("%15s", "Name");
+
+
+    }
+  public static void statement(int cid,String pw) throws SQLException {
+      columnName();
+      System.out.println();
+      String en=encrypt(pw);
+      ResultSet set=   stmt.executeQuery("select * from details1 where custid='"+cid+"' AND pw='"+en+"'");
+      while (set.next()){
+          for(int i=1;i<=3;i++){
+              System.out.printf("%15s",set.getString(i));;
+          }
+          System.out.println();
+      }
+      System.out.println("----------------------------------------------------");
+      System.out.println();
+      System.out.printf("%20s", "TransId");
+      System.out.printf("%20s", "TransType");
+      System.out.printf("%20s", "Amount");
+      System.out.printf("%20s", "Balance");
+      System.out.println();
+int id=1;
+      ResultSet rs=stmt.executeQuery("select * from state1 where custid='"+cid+"' ");
+      while(rs.next()){
+
+          System.out.printf("%20s",id);
+          id++;
+
+          for(int i=2;i<=4;i++){
+              System.out.printf("%20s",rs.getString(i));
+          }
+          System.out.println();
+      }
+      System.out.println("=========================================================");
+  }
+
+
+    public static void top() throws SQLException {
+
+        String qu="SELECT * FROM  details1 ORDER BY bal DESC";
+        ResultSet set=  stmt.executeQuery(qu);
+        while (set.next()) {
+            for (int i = 1; i <= 5; i++) {
+                System.out.printf("%15s",set.getString(i));
+            }
+            System.out.println();
+        }
+    }
+
+}
+
+//main method
+
+package BankApplication;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Bank extends Details{
+
+
+    public static void main(String[] args) throws SQLException {
+        Scanner sc=new Scanner(System.in);
+        String en = null,type="";int id,accnum,bal;
+
+
+while (true){
+    System.out.println("Enter 1 for Initialization customer details:\nenter 2 for " +
+            "add new customers:");
+    int ch= sc.nextInt();
+    if(ch==1) {
+        intial();
+        System.out.println("==============================");
+    }
+    if(ch==2){
+        cc();
+        id=(count+1)*11;
+        accnum=(count+1)*11011;
+        bal=10000;
+        System.out.println("Enter your name :");
+        String name=sc.next();
+        System.out.println("Enter the password :");
+        String pw=sc.next();
+        System.out.println("Enter the retype password:");
+        String rpw=sc.next();
+        if(pw.equals(rpw)){
+            en= encrypt(pw);
+        }
+        else{
+            System.out.println("Incorrect password");
+        }
+        addNew(id,accnum,name,bal,en);
+    }
+
+    int currentBal = 0, currentBal1 = 0;int n = 0,cid=0;
+    int min=1000;
+    String pw="";
+        System.out.println("enter 1 for ATM Withdrawal\nenter 2 for Cash Deposit\nenter 3 for Account Transfer\nenter 4 for Account Statement:" +
+                "\nenter 5 for top n customer:");
+        int choice=sc.nextInt();
+if(choice !=5) {
+    System.out.println("Enter your customer id:");
+    cid = sc.nextInt();
+
+    System.out.println("Enter your password:");
+   pw = sc.next();
+    n = Authentication(cid, pw);
+
+}
+        if(choice==1 && n==1 ) {
+            System.out.println("Enter 1 for Balance details\nEnter 2 for Debit from balance");
+            int ch1 = sc.nextInt();
+            currentBal = BalanceDetails(cid, pw);
+            if (ch1 == 1) {
+
+                System.out.println("current balance is : " + currentBal);
+            }
+            if (ch1 == 2) {
+                System.out.println("Enter the amount:");
+                int amount = sc.nextInt();
+                currentBal = currentBal - amount;
+
+                System.out.println("collect the amount:" + amount);
+                type="ATM WithDrawal";
+                update(cid, currentBal,amount,type);
+            }}
+
+        if(choice==2 && n==1){
+                currentBal = BalanceDetails(cid, pw);
+                System.out.println("Enter the amount :");
+                int amunt=sc.nextInt();
+                currentBal=currentBal+amunt;
+                System.out.println("Deposit successful");
+                type="cash Deposit";
+                update(cid,currentBal,amunt,type);
+
+            }
+
+        if(choice==3 && n==1){
+            currentBal = BalanceDetails(cid, pw);
+
+            System.out.println("Enter the deposited Account Number:");
+            int dcid = sc.nextInt();
+
+            currentBal1 = BalanceDetails(dcid);
+
+            System.out.println("Enter the amount:");
+            int amnt = sc.nextInt();
+
+            if (amnt < currentBal && currentBal > min) {
+                currentBal=currentBal-amnt;
+                type="Transfer to "+dcid;
+                update(cid,currentBal,amnt,type);
+                type="Transfer from "+cid;
+                currentBal1=currentBal1+amnt;
+                String uid= String.valueOf((dcid));
+
+                String cid1=Integer.parseInt(String.valueOf(uid.charAt(0)))+""+Integer.parseInt(String.valueOf(uid.charAt(1)));
+               cid= Integer.parseInt(cid1);
+                update(cid,currentBal1,amnt,type);
+
+            }
+        }
+
+        if(choice==4){
+            statement(cid,pw);
+        }
+
+        if(choice==5){
+            top();
+        }
+    }
+
+
+}}
